@@ -6,10 +6,10 @@ import Link from "next/link";
 export default async function Activity({
   params,
 }: {
-  params: Promise<{ address: string }>;
+  params: { address: string };
 }) {
   // params contains parameters we can parse from the URL Route
-  const { address } = await params;
+  const { address } = params;
 
   // Once we know the address, we fetch the initial 20 transactions
   const initialTransactions = await fetchAddressTransactions({ address });
