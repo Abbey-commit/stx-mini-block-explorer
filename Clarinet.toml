@@ -1,0 +1,9 @@
+[project]
+name = "clarity-learn"
+description = "Educational smart contract for ClarityLearn feature"
+authors = ["Biodun"]
+version = "0.1.0"
+
+[contracts.clarity-learn]
+path = "contracts/clarity-learn.clar"
+clarity_version = 3
