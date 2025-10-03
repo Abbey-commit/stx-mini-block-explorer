@@ -84,18 +84,10 @@ interface TransactionEvent {
   burn: number;
 }
 
-export async function fetchAddressTransactions({
-  address,
-  offset = 0,
-}: FetchAddressTransactionsArgs): Promise<FetchAddressTransactionsResponse> {
-  const url = `https://api.hiro.so/extended/v2/addresses/${address}/transactions?limit=20&offset=${offset}`;
-
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch address transactions");
-  }
-
-  const data = await response.json();
-  return data as FetchAddressTransactionsResponse;
+export async function fetchAddressTransactions({ address }: { address: string }) {
+  const res = await fetch(
+    `https://api.testnet.hiro.so/extended/v1/address/${address}/transactions`
+  );
+  const data = await res.json();
+  return data.results;
 }

@@ -34,26 +34,24 @@ export function TransactionsList({
 
     setAllTxns({
       ...newTxns,
-      results: [...allTxns.results, ...newTxns.results],
+      results: [...(allTxns.results || []), ...(newTxns.results || [])],
     });
   }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col border rounded-md divide-y border-gray-800 divide-gray-800">
-        {allTxns.results.map((tx) => (
-          <div key={tx.tx.tx_id}>
-            <TransactionDetail result={tx} />
-          </div>
-        ))}
+        {allTxns?.results && allTxns.results.length > 0 ? (
+          allTxns.results.map((tx) => (
+            <div key={tx.tx.tx_id}>
+              <TransactionDetail result={tx} />
+            </div>
+          ))
+        ) : (
+          <div className="p-4 text-gray-400">No transactions found</div>
+        )}
       </div>
-      <button
-        type="button"
-        className="px-4 py-2 rounded-lg w-fit border border-gray-800 mx-auto text-center hover:bg-gray-900 transition-all"
-        onClick={loadMoreTxns}
-      >
-        Load More
-      </button>
     </div>
+
   );
 }
