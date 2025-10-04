@@ -1,6 +1,6 @@
 [project]
 name = "clarity-learn"
-description = "A simple learning contract for Stacks Explorer integration"
+description = "A mini block explorer project extended with ClarityLearn feature"
 authors = []
 telemetry = true
 cache_dir = "./.cache"

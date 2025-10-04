@@ -135,4 +135,31 @@ describe("ClarityLearn Dictionary Tests", () => {
     expect(getResult.result.type).toBe("some");
     expect(getResult.result.value.value.value.value).toBe("Peer-to-peer electronic cash system");
   });
+
+  it("increments total terms count when new term is stored", async () => {
+  const deployer = accounts.get("deployer")!;
+
+  // Store a completely new term
+  simnet.callPublicFn(
+    "clarity-learn",
+    "store-term",
+    [
+      Cl.stringAscii("newterm"),
+      Cl.stringAscii("This is a new unique term"),
+    ],
+    deployer
+  );
+
+  // Get total term count
+  const totalResult = simnet.callReadOnlyFn(
+    "clarity-learn",
+    "get-total-terms",
+    [],
+    deployer
+  );
+
+  expect(totalResult.result.type).toBe("ok");
+  const count = Number(totalResult.result.value.value);
+  expect(count).toBeGreaterThan(0);
+  });
 });
