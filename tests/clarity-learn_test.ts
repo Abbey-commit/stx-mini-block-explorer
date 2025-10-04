@@ -1,23 +1,138 @@
-import { Clarinet, Tx, Chain, Account } from "clarinet";
+import { describe, expect, it, beforeAll } from "vitest";
+import { Cl } from "@stacks/transactions";
+import { initSimnet } from "@hirosystems/clarinet-sdk";
 
-Clarinet.test({
-  name: "Ensure clicks increment correctly",
-  async fn(chain: Chain, accounts: Map<string, Account>) {
+let simnet: any;
+let accounts: Map<string, string>;
+
+beforeAll(async () => {
+  simnet = await initSimnet();
+  accounts = simnet.getAccounts();
+});
+
+describe("ClarityLearn Dictionary Tests", () => {
+  
+  it("stores and retrieves a term successfully", () => {
     const deployer = accounts.get("deployer")!;
+    
+    // Store a term
+    const storeResult = simnet.callPublicFn(
+      "clarity-learn",
+      "store-term",
+      [
+        Cl.stringAscii("blockchain"),
+        Cl.stringAscii("A distributed ledger technology")
+      ],
+      deployer
+    );
+    
+    // Verify the store was successful
+    expect(storeResult.result.type).toBe("ok");
+    
+    // Retrieve the term
+    const getResult = simnet.callReadOnlyFn(
+      "clarity-learn",
+      "get-term",
+      [Cl.stringAscii("blockchain")],
+      deployer
+    );
+    
+    // Verify we got a Some value back
+    expect(getResult.result.type).toBe("some");
+    expect(getResult.result.value.value.value.value).toBe("A distributed ledger technology");
+  });
 
-    let block = chain.mineBlock([
-      Tx.contractCall("clarity-learn", "record-click", [], deployer.address),
-    ]);
+  it("returns none for non-existent keys", () => {
+    const deployer = accounts.get("deployer")!;
+    
+    const getResult = simnet.callReadOnlyFn(
+      "clarity-learn",
+      "get-term",
+      [Cl.stringAscii("nonexistent")],
+      deployer
+    );
+    
+    // Verify we got None back
+    expect(getResult.result.type).toBe("none");
+  });
 
-    block.receipts[0].result.expectOk().expectUint(1);
+  it("allows updating existing terms", () => {
+    const deployer = accounts.get("deployer")!;
+    
+    // Store initial term
+    simnet.callPublicFn(
+      "clarity-learn",
+      "store-term",
+      [
+        Cl.stringAscii("stacks"),
+        Cl.stringAscii("Initial definition")
+      ],
+      deployer
+    );
+    
+    // Update the term
+    const updateResult = simnet.callPublicFn(
+      "clarity-learn",
+      "store-term",
+      [
+        Cl.stringAscii("stacks"),
+        Cl.stringAscii("Updated: A Bitcoin L2 for smart contracts")
+      ],
+      deployer
+    );
+    
+    expect(updateResult.result.type).toBe("ok");
+    
+    // Verify the update
+    const getResult = simnet.callReadOnlyFn(
+      "clarity-learn",
+      "get-term",
+      [Cl.stringAscii("stacks")],
+      deployer
+    );
+    
+    // Should have the updated value
+    expect(getResult.result.type).toBe("some");
+    expect(getResult.result.value.value.value.value).toBe("Updated: A Bitcoin L2 for smart contracts");
+  });
 
-    let block2 = chain.mineBlock([
-      Tx.contractCall("clarity-learn", "record-click", [], deployer.address),
-    ]);
-
-    block2.receipts[0].result.expectOk().expectUint(2);
-
-    let clicks = chain.callReadOnlyFn("clarity-learn", "get-clicks", [], deployer.address);
-    clicks.result.expectOk().expectUint(2);
-  },
+  it("allows different users to store terms", () => {
+    const deployer = accounts.get("deployer")!;
+    const wallet1 = accounts.get("wallet_1")!;
+    
+    // Deployer stores a term
+    simnet.callPublicFn(
+      "clarity-learn",
+      "store-term",
+      [
+        Cl.stringAscii("clarity"),
+        Cl.stringAscii("Smart contract language for Stacks")
+      ],
+      deployer
+    );
+    
+    // Wallet1 can also store
+    const wallet1Result = simnet.callPublicFn(
+      "clarity-learn",
+      "store-term",
+      [
+        Cl.stringAscii("bitcoin"),
+        Cl.stringAscii("Peer-to-peer electronic cash system")
+      ],
+      wallet1
+    );
+    
+    expect(wallet1Result.result.type).toBe("ok");
+    
+    // Verify wallet1's term was stored
+    const getResult = simnet.callReadOnlyFn(
+      "clarity-learn",
+      "get-term",
+      [Cl.stringAscii("bitcoin")],
+      wallet1
+    );
+    
+    expect(getResult.result.type).toBe("some");
+    expect(getResult.result.value.value.value.value).toBe("Peer-to-peer electronic cash system");
+  });
 });
