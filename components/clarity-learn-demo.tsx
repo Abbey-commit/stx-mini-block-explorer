@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getTerm, storeTerm } from "@/lib/stack";
-import { cvToValue } from "@stacks/transactions";
+import { getTerm, storeTerm } from "@/lib/stacks";
 
 export function ClarityLearnDemo() {
   const [searchKey, setSearchKey] = useState("");
@@ -24,8 +23,7 @@ export function ClarityLearnDemo() {
       const data = await getTerm(searchKey);
 
       if (data && data.type === "some") {
-        const clarityValue = cvToValue(data);
-        setResult(clarityValue.value.value);
+        setResult(data.value.value.value.value);
       } else if (data && data.type === "none") {
         setResult("Term not found in dictionary");
       } else {
@@ -59,7 +57,6 @@ export function ClarityLearnDemo() {
 
     try {
       await storeTerm(storeKey, storeValue);
-      alert("Transaction submitted! Check your wallet for confirmation.");
       setStoreKey("");
       setStoreValue("");
     } catch (error) {
@@ -89,6 +86,11 @@ export function ClarityLearnDemo() {
               placeholder="Enter term (e.g., blockchain)"
               className="flex-1 px-4 py-2 bg-gray-700 rounded-lg text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
               maxLength={32}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSearch();
+                }
+              }}
             />
             <button
               onClick={handleSearch}
@@ -142,12 +144,20 @@ export function ClarityLearnDemo() {
 
         {/* Example Terms */}
         <div className="mt-6 p-4 bg-gray-700 rounded-lg border border-gray-600">
-          <p className="text-sm font-semibold mb-2">Example terms stored in tests:</p>
+          <p className="text-sm font-semibold mb-2 text-yellow-400">Demo Mode - Using Local Dictionary</p>
+          <p className="text-xs text-gray-400 mb-3">
+            Contract not yet deployed to testnet. Search works with pre-defined terms. 
+            All tests pass in Clarinet environment.
+          </p>
+          <p className="text-sm font-semibold mb-2">Available terms to search:</p>
           <ul className="text-sm text-gray-300 space-y-1">
             <li>• blockchain</li>
             <li>• stacks</li>
             <li>• bitcoin</li>
             <li>• clarity</li>
+            <li>• nonce</li>
+            <li>• contract_call</li>
+            <li>• token_transfer</li>
           </ul>
         </div>
       </div>
