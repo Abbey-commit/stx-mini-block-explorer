@@ -1,0 +1,18 @@
+[project]
+name = "clarity-learn"
+description = "A mini block explorer project extended with ClarityLearn feature"
+authors = []
+telemetry = true
+cache_dir = "./.cache"
+
+[contracts.clarity-learn]
+path = "contracts/clarity-learn.clar"
+epoch = "3.0"
+
+[repl.analysis]
+passes = ["check_checker"]
+
+[repl.analysis.check_checker]
+trusted_sender = false
+trusted_caller = false
+callee_filter = false
