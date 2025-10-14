@@ -1,0 +1,11 @@
+[project]
+name = "clarity-learn"
+description = "A simple learning contract for Stacks Explorer integration"
+authors = []
+telemetry = false
+clarity_version = 2.05
+epoch = 2.0
+
+[contracts.clarity-learn]
+path = "contracts/clarity-learn.clar"
+depends_on = []

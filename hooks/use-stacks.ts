@@ -31,12 +31,17 @@ export function useStacks() {
   }
 
   useEffect(() => {
-    if (userSession.isUserSignedIn()) {
-      setUserData(userSession.loadUserData());
-    } else if (userSession.isSignInPending()) {
-      userSession.handlePendingSignIn().then((data) => setUserData(data));
+    try {
+      if (userSession.isUserSignedIn()) {
+        setUserData(userSession.loadUserData());
+      } else if (userSession.isSignInPending()) {
+        userSession.handlePendingSignIn().then((data) => setUserData(data));
+      }
+    } catch (err) {
+      console.error("Error loading Stacks session:", err);
+      userSession.signUserOut(); // reset corrupted session
     }
   }, []);
-
+  
   return { userData, connectWallet, disconnectWallet };
 }

@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { ClarityLearnExplain } from "./clarity-learn-explain";
 
 interface TransactionDetailProps {
   result: FetchAddressTransactionsResponse["results"][number];
@@ -112,8 +113,22 @@ export function TransactionDetail({ result }: TransactionDetailProps) {
               <Link
                 href={`/address/${result.tx.sender_address}`}
                 className="hover:underline transition-all"
-              >{`${abbreviateAddress(result.tx.sender_address)}`}</Link>
+              >
+                {`${abbreviateAddress(result.tx.sender_address)}`}
+              </Link>
             </span>
+          </div>
+
+          {/** Added ClarityLearnExplain inline */}
+          <div className="text-ts text-gray-400 mt-2">
+            <p>
+              {result.tx?.nonce}
+            </p>
+            <p>
+              <ClarityLearnExplain term={result.tx?.tx_type}>
+                {result.tx?.tx_type}
+              </ClarityLearnExplain>
+            </p>
           </div>
         </div>
       </div>
@@ -136,3 +151,4 @@ export function TransactionDetail({ result }: TransactionDetailProps) {
     </div>
   );
 }
+
