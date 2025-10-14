@@ -1,0 +1,11 @@
+[network]
+name = "testnet"
+deployment_fee_rate = 10
+
+[accounts.deployer]
+mnemonic = "test test test test test test test test test test test junk"
+balance = 100_000_000_000_000
+
+[accounts.wallet_1]
+mnemonic = "test test test test test test test test test test test junk"
+balance = 100_000_000_000_000

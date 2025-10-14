@@ -1,0 +1,4 @@
+#V2
+(contract-call? .clarity-learn get-term "consensus")
+(contract-call? .clarity-learn get-term "web3")
+(contract-call? .clarity-learn get-term "PoX (Pproof of Transfer)")

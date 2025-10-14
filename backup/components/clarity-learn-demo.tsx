@@ -1,94 +1,40 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  getTerm, 
-  storeTerm, 
-  getTotalTerms,
-} from "@/lib/stacks";
-import { clarityDictionary } from "@/lib/clarity-dictionary";
+import { getTerm, storeTerm, getTotalTerms } from "@/lib/stacks";
 
 export function ClarityLearnDemo() {
   const [searchKey, setSearchKey] = useState("");
   const [storeKey, setStoreKey] = useState("");
   const [storeValue, setStoreValue] = useState("");
   const [result, setResult] = useState<string | null>(null);
-  const [resultSource, setResultSource] = useState<"blockchain" | "local" | null>(null);
   const [totalTerms, setTotalTerms] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
-
-// UPDATE: components/clarity-learn-demo.tsx
-// Replace the handleSearch function with this improved version
 
   async function handleSearch() {
     if (!searchKey.trim()) {
       setResult("Please enter a search term");
-      setResultSource(null);
       return;
     }
 
     setLoading(true);
     setResult(null);
-    setResultSource(null);
 
     try {
-      // First, try blockchain
       const data = await getTerm(searchKey);
-      
-      console.log("Component received data:", data);
 
       if (data && data.type === "some") {
-        // Found on blockchain
-        setResult(data.value);
-        setResultSource("blockchain");
+        // Extract value from Clarity response
+        const value = data.value.value.value.value;
+        setResult(value);
       } else if (data && data.type === "none") {
-        // Not found on blockchain, check local dictionary
-        const normalizedKey = searchKey.toLowerCase().trim();
-        const localResult = clarityDictionary[normalizedKey];
-        
-        if (localResult) {
-          setResult(localResult);
-          setResultSource("local");
-        } else {
-          setResult(`"${searchKey}" not found in blockchain dictionary or local database. You can add it using the form below!`);
-          setResultSource(null);
-        }
+        setResult("Term not found in blockchain dictionary");
       } else {
-        // Error case - fallback to local dictionary
-        const normalizedKey = searchKey.toLowerCase().trim();
-        const localResult = clarityDictionary[normalizedKey];
-        
-        if (localResult) {
-          setResult(localResult);
-          setResultSource("local");
-        } else {
-          // Show helpful message instead of technical error
-          setResult(
-            `Unable to fetch from blockchain at this time. The term "${searchKey}" is not in the local database. ` +
-            `If you recently stored this term, please wait a few minutes for blockchain confirmation, then try again.`
-          );
-          setResultSource(null);
-        }
+        setResult("Error fetching term from blockchain");
       }
     } catch (error) {
-      console.error("Search error:", error);
-      
-      // On error, try local dictionary as fallback
-      const normalizedKey = searchKey.toLowerCase().trim();
-      const localResult = clarityDictionary[normalizedKey];
-      
-      if (localResult) {
-        setResult(localResult);
-        setResultSource("local");
-      } else {
-        // User-friendly error message
-        setResult(
-          `Blockchain query unavailable. "${searchKey}" not found in local database. ` +
-          `Tip: Search for terms like "blockchain", "stacks", or "clarity" from the local dictionary, ` +
-          `or store your own terms to save them on-chain!`
-        );
-        setResultSource(null);
-      }
+      setResult("Error connecting to blockchain");
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -113,13 +59,13 @@ export function ClarityLearnDemo() {
     setLoading(true);
 
     try {
-      await storeTerm(storeKey.toLowerCase(), storeValue);
+      await storeTerm(storeKey, storeValue);
       // Clear form on successful submission
       setStoreKey("");
       setStoreValue("");
     } catch (error) {
       console.error(error);
-      alert("Error: Make sure Leather wallet is installed and you have testnet STX");
+      alert("Error: Make sure Leather wallet is connected");
     } finally {
       setLoading(false);
     }
@@ -129,11 +75,9 @@ export function ClarityLearnDemo() {
     setLoading(true);
     try {
       const data = await getTotalTerms();
-      
-      console.log("Component received total terms:", data);
-      
       if (data && data.type === "ok") {
-        setTotalTerms(data.value);
+        const count = Number(data.value.value);
+        setTotalTerms(count);
       }
     } catch (error) {
       console.error(error);
@@ -141,9 +85,6 @@ export function ClarityLearnDemo() {
       setLoading(false);
     }
   }
-
-  // Get available example terms from local dictionary
-  const exampleTerms = Object.keys(clarityDictionary).slice(0, 5);
 
   return (
     <div className="max-w-4xl mx-auto p-8 space-y-8">
@@ -181,18 +122,7 @@ export function ClarityLearnDemo() {
 
           {result && (
             <div className="mt-4 p-4 bg-gray-700 rounded-lg border border-gray-600">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-sm text-gray-400">Result:</p>
-                {resultSource && (
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    resultSource === "blockchain" 
-                      ? "bg-green-900 text-green-300" 
-                      : "bg-blue-900 text-blue-300"
-                  }`}>
-                    {resultSource === "blockchain" ? "🔗 From Blockchain" : "📚 From Local DB"}
-                  </span>
-                )}
-              </div>
+              <p className="text-sm text-gray-400 mb-1">Result:</p>
               <p className="text-white">{result}</p>
             </div>
           )}
@@ -202,7 +132,7 @@ export function ClarityLearnDemo() {
         <div className="border-t border-gray-700 pt-6">
           <h3 className="text-lg font-semibold mb-3">Add a New Term</h3>
           <p className="text-sm text-gray-400 mb-4">
-            Leather wallet will open to sign the transaction
+            Connect your Leather wallet to store terms on-chain
           </p>
           
           <div className="space-y-3">
@@ -226,7 +156,7 @@ export function ClarityLearnDemo() {
               disabled={loading}
               className="w-full px-6 py-3 bg-green-500 hover:bg-green-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
-              {loading ? "Processing..." : "Store Term on Blockchain"}
+              {loading ? "Processing..." : "Store Term (Requires Wallet)"}
             </button>
           </div>
         </div>
@@ -249,7 +179,7 @@ export function ClarityLearnDemo() {
 
         {/* Live Testnet Notice */}
         <div className="mt-6 p-4 bg-green-900 bg-opacity-30 rounded-lg border border-green-700">
-          <p className="text-sm font-semibold mb-2 text-green-400">Live on Stacks Testnet</p>
+          <p className="text-sm font-semibold mb-2 text-green-400">✓ Live on Stacks Testnet</p>
           <p className="text-xs text-gray-300 mb-2">
             Contract deployed at: STTGMHNSGEDHMK15KY3C4TAN5NDQ1Z8FJN1YV757.clarity-learn
           </p>
@@ -258,25 +188,14 @@ export function ClarityLearnDemo() {
           </p>
         </div>
 
-        {/* Example Terms with Local Fallback */}
+        {/* Example Terms */}
         <div className="mt-6 p-4 bg-gray-700 rounded-lg border border-gray-600">
-          <p className="text-sm font-semibold mb-2">Try searching for these terms:</p>
-          <div className="flex flex-wrap gap-2 mt-3">
-            {exampleTerms.map((term) => (
-              <button
-                key={term}
-                onClick={() => {
-                  setSearchKey(term);
-                }}
-                className="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm text-gray-200 transition-colors"
-              >
-                {term}
-              </button>
-            ))}
-          </div>
-          <p className="text-xs text-gray-400 mt-3">
-            💡 Terms available in local database: {Object.keys(clarityDictionary).length}
-          </p>
+          <p className="text-sm font-semibold mb-2">Try searching for:</p>
+          <ul className="text-sm text-gray-300 space-y-1">
+            <li>• Any term you've stored</li>
+            <li>• Terms from the tests (check if they're on testnet)</li>
+            <li>• Case-insensitive search works!</li>
+          </ul>
         </div>
       </div>
     </div>

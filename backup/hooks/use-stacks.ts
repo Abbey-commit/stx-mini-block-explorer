@@ -1,8 +1,8 @@
 import {
   AppConfig,
-  UserSession,
   showConnect,
   type UserData,
+  UserSession,
 } from "@stacks/connect";
 import { useEffect, useState } from "react";
 
@@ -21,9 +21,6 @@ export function useStacks() {
       userSession,
       onFinish: () => {
         window.location.reload();
-      },
-      onCancel: () => {
-        console.log("User cancelled connection");
       },
     });
   }

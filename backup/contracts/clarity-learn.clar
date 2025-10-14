@@ -1,5 +1,5 @@
 ;; ClarityLearn Dictionary Contract
-;; A simple key-value store for learning Stacks Smart Contract on Bitcoin basics
+;; A simple key-value store for learning Clarity basics
 
 ;; Track total number of unique terms stored
 (define-data-var total-terms uint u0)

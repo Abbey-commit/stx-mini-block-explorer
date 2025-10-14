@@ -1,5 +1,4 @@
 "use client";
-
 import { useStacks } from "@/hooks/use-stacks";
 import { abbreviateAddress } from "@/lib/stx-utils";
 import { createAddress } from "@stacks/transactions";

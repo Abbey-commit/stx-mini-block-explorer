@@ -2,7 +2,7 @@
 name = "clarity-learn"
 description = "A mini block explorer project extended with ClarityLearn feature"
 authors = []
-telemetry = true
+telemetry = false
 cache_dir = "./.cache"
 
 [contracts.clarity-learn]
