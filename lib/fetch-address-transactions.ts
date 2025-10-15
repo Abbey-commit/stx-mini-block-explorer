@@ -91,3 +91,4 @@ export async function fetchAddressTransactions({ address }: { address: string })
   const data = await res.json();
   return data.results;
 }
+

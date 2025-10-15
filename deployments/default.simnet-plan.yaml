@@ -34,5 +34,5 @@ plan:
             contract-name: clarity-learn
             emulated-sender: ST3N7D4F8TDBNPAN7W6CJ5RGF5DAW5MGHNEGTCR6R
             path: contracts/clarity-learn.clar
-            clarity-version: 3
-      epoch: "3.0"
+            clarity-version: 2
+      epoch: "2.5"
