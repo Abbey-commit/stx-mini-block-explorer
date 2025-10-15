@@ -9,15 +9,39 @@ import {
 } from "@stacks/transactions";
 
 // ========================================
-// NETWORK CONFIGURATION
+// NETWORK CONFIGURATION WITH ENV SUPPORT
 // ========================================
-const network = StacksNetworks.testnet;
+
+// Try to read from environment variables, fallback to hardcoded values
+const getNetwork = () => {
+  const envNetwork = import.meta.env?.VITE_STACKS_NETWORK;
+  
+  // If environment variable exists and is 'mainnet', use mainnet
+  if (envNetwork === 'mainnet') {
+    return StacksNetworks.mainnet;
+  }
+  
+  // Default to testnet (your current working setup)
+  return StacksNetworks.testnet;
+};
+
+const network = getNetwork();
 
 // ========================================
 // YOUR DEPLOYED TESTNET CONTRACT
 // ========================================
-const CONTRACT_ADDRESS = "STTGMHNSGEDHMK15KY3C4TAN5NDQ1Z8FJN1YV757";
-const CONTRACT_NAME = "clarity-learn";
+
+// Try to read contract details from environment, fallback to hardcoded
+const CONTRACT_ADDRESS = import.meta.env?.VITE_CONTRACT_ADDRESS || "STTGMHNSGEDHMK15KY3C4TAN5NDQ1Z8FJN1YV757";
+const CONTRACT_NAME = import.meta.env?.VITE_CONTRACT_NAME || "clarity-learn";
+
+// Log configuration on startup (only in development)
+if (import.meta.env?.DEV) {
+  console.log("🔧 Stacks Configuration:");
+  console.log("  Network:", network === StacksNetworks.testnet ? "Testnet" : "Mainnet");
+  console.log("  Contract:", `${CONTRACT_ADDRESS}.${CONTRACT_NAME}`);
+  console.log("  Using env vars:", !!import.meta.env?.VITE_CONTRACT_ADDRESS);
+}
 
 /**
  * Store a term in the blockchain dictionary
@@ -86,11 +110,8 @@ export async function storeTerm(key: string, value: string) {
  * Get a term from the blockchain dictionary
  * Uses fetchCallReadOnlyFunction from @stacks/transactions
  */
-// UPDATE: lib/stacks.ts
-// Replace the getTerm function with this version
-
 export async function getTerm(key: string) {
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isDevelopment = import.meta.env?.DEV || process.env.NODE_ENV === 'development';
   
   try {
     if (isDevelopment) {
@@ -202,6 +223,6 @@ export async function getTotalTerms() {
 export const CONTRACT_INFO = {
   address: CONTRACT_ADDRESS,
   name: CONTRACT_NAME,
-  network: "testnet",
-  explorerUrl: `https://explorer.hiro.so/txid/${CONTRACT_ADDRESS}.${CONTRACT_NAME}?chain=testnet`,
+  network: network === StacksNetworks.testnet ? "testnet" : "mainnet",
+  explorerUrl: `https://explorer.hiro.so/txid/${CONTRACT_ADDRESS}.${CONTRACT_NAME}?chain=${network === StacksNetworks.testnet ? "testnet" : "mainnet"}`,
 };
