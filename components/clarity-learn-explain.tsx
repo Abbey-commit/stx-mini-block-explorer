@@ -3,17 +3,21 @@
 import { useState } from "react";
 import { clarityDictionary } from "@/lib/clarity-dictionary";
 
+
 interface Props {
-    terms: string;
-    children: React.ReactNode;
+  term?: string;  // Add this line
+  children: React.ReactNode;
 }
 
 export function ClarityLearnExplain({ term, children } : Props) {
     const [open, setOpen] = useState(false);
 
-    const explanation =
-        clarityDictionary[term] || "No explanation available for this term yet.";
+    // Fix: Handle undefined term properly
+    const explanation = term && clarityDictionary[term]
+        ? clarityDictionary[term]
+        : "No explanation available for this term yet.";
 
+        
     return (
         <span className="relative">
             <span

@@ -1,8 +1,4 @@
 // Input to our function
-interface FetchAddressTransactionsArgs {
-  address: string;
-  offset?: number;
-}
 
 // Output from our function
 export interface FetchAddressTransactionsResponse {

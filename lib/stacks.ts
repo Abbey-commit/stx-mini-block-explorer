@@ -1,47 +1,21 @@
 import { openContractCall } from "@stacks/connect";
-import { StacksNetworks } from "@stacks/network";
+import { STACKS_TESTNET } from '@stacks/network';
 import { 
   stringAsciiCV, 
-  cvToValue,
   fetchCallReadOnlyFunction,
   ClarityType,
-  // uintCV
 } from "@stacks/transactions";
 
 // ========================================
-// NETWORK CONFIGURATION WITH ENV SUPPORT
+// NETWORK CONFIGURATION
 // ========================================
-
-// Try to read from environment variables, fallback to hardcoded values
-const getNetwork = () => {
-  const envNetwork = import.meta.env?.VITE_STACKS_NETWORK;
-  
-  // If environment variable exists and is 'mainnet', use mainnet
-  if (envNetwork === 'mainnet') {
-    return StacksNetworks.mainnet;
-  }
-  
-  // Default to testnet (your current working setup)
-  return StacksNetworks.testnet;
-};
-
-const network = getNetwork();
+const network = STACKS_TESTNET;
 
 // ========================================
 // YOUR DEPLOYED TESTNET CONTRACT
 // ========================================
-
-// Try to read contract details from environment, fallback to hardcoded
-const CONTRACT_ADDRESS = import.meta.env?.VITE_CONTRACT_ADDRESS || "STTGMHNSGEDHMK15KY3C4TAN5NDQ1Z8FJN1YV757";
-const CONTRACT_NAME = import.meta.env?.VITE_CONTRACT_NAME || "clarity-learn";
-
-// Log configuration on startup (only in development)
-if (import.meta.env?.DEV) {
-  console.log("🔧 Stacks Configuration:");
-  console.log("  Network:", network === StacksNetworks.testnet ? "Testnet" : "Mainnet");
-  console.log("  Contract:", `${CONTRACT_ADDRESS}.${CONTRACT_NAME}`);
-  console.log("  Using env vars:", !!import.meta.env?.VITE_CONTRACT_ADDRESS);
-}
+const CONTRACT_ADDRESS = "STTGMHNSGEDHMK15KY3C4TAN5NDQ1Z8FJN1YV757";
+const CONTRACT_NAME = "clarity-learn";
 
 /**
  * Store a term in the blockchain dictionary
@@ -79,7 +53,7 @@ export async function storeTerm(key: string, value: string) {
         name: "ClarityLearn Dictionary",
         icon: window.location.origin + "/favicon.ico",
       },
-      onFinish: (data: any) => {
+      onFinish: (data: { txId: string }) => {
         console.log("Transaction submitted:", data.txId);
         alert(
           `Transaction submitted successfully!\n\n` +
@@ -110,12 +84,15 @@ export async function storeTerm(key: string, value: string) {
  * Get a term from the blockchain dictionary
  * Uses fetchCallReadOnlyFunction from @stacks/transactions
  */
+
 export async function getTerm(key: string) {
-  const isDevelopment = import.meta.env?.DEV || process.env.NODE_ENV === 'development';
+  const isDevelopment = process.env.NODE_ENV === 'development';
   
   try {
+    const normalizedKey = key.toLowerCase().trim();
+    
     if (isDevelopment) {
-      console.log(`Searching for term: "${key}"`);
+      console.log(`Searching for term: "${normalizedKey}"`);
       console.log(`Contract: ${CONTRACT_ADDRESS}.${CONTRACT_NAME}`);
     }
     
@@ -124,32 +101,39 @@ export async function getTerm(key: string) {
       contractAddress: CONTRACT_ADDRESS,
       contractName: CONTRACT_NAME,
       functionName: "get-term",
-      functionArgs: [stringAsciiCV(key.toLowerCase())],
+      functionArgs: [stringAsciiCV(normalizedKey)],
       network,
       senderAddress: CONTRACT_ADDRESS,
     });
     
     if (isDevelopment) {
       console.log("Raw result:", result);
+      console.log("Result type:", result.type);
+      console.log("ClarityType.OptionalSome:", ClarityType.OptionalSome);
+      console.log("ClarityType.OptionalNone:", ClarityType.OptionalNone);
     }
     
-    // Check if it's an optional type
+    // Check if it's an optional type with a value
     if (result.type === ClarityType.OptionalSome) {
       const innerValue = result.value;
       
+      if (isDevelopment) {
+        console.log("Found OptionalSome, inner value:", innerValue);
+        console.log("Inner value type:", innerValue.type);
+      }
+      
       if (innerValue.type === ClarityType.StringASCII) {
         if (isDevelopment) {
-          console.log("✅ Found on blockchain:", innerValue.data);
+          console.log("Found on blockchain:", innerValue.value);
         }
         return {
-          type: "some",
-          value: innerValue.data,
-          source: "blockchain"
+          definition: innerValue.value,  // Using .data for string access
+          source: "blockchain" as const,
         };
       }
     } else if (result.type === ClarityType.OptionalNone) {
       if (isDevelopment) {
-        console.log("Not found on blockchain");
+        console.log("Not found on blockchain (OptionalNone)");
       }
       return {
         type: "none",
@@ -157,14 +141,19 @@ export async function getTerm(key: string) {
       };
     }
     
+    // Unexpected format
+    if (isDevelopment) {
+      console.warn("Unexpected result format:", result);
+    }
     return null;
     
   } catch (error) {
     // Only log errors in development
     if (isDevelopment) {
-      console.warn("Blockchain query failed (this is often expected):", error);
+      console.error("Blockchain query error:", error);
       if (error instanceof Error) {
-        console.warn("Error details:", error.message);
+        console.error("Error message:", error.message);
+        console.error("Error stack:", error.stack);
       }
     }
     
@@ -223,6 +212,6 @@ export async function getTotalTerms() {
 export const CONTRACT_INFO = {
   address: CONTRACT_ADDRESS,
   name: CONTRACT_NAME,
-  network: network === StacksNetworks.testnet ? "testnet" : "mainnet",
-  explorerUrl: `https://explorer.hiro.so/txid/${CONTRACT_ADDRESS}.${CONTRACT_NAME}?chain=${network === StacksNetworks.testnet ? "testnet" : "mainnet"}`,
+  network: "testnet",
+  explorerUrl: `https://explorer.hiro.so/txid/${CONTRACT_ADDRESS}.${CONTRACT_NAME}?chain=testnet`,
 };

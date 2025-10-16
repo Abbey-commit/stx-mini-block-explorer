@@ -20,60 +20,26 @@ export function ClarityLearnDemo() {
 // UPDATE: components/clarity-learn-demo.tsx
 // Replace the handleSearch function with this improved version
 
-  async function handleSearch() {
-    if (!searchKey.trim()) {
-      setResult("Please enter a search term");
-      setResultSource(null);
-      return;
-    }
-
-    setLoading(true);
-    setResult(null);
+async function handleSearch() {
+  if (!searchKey.trim()) {
+    setResult("Please enter a search term");
     setResultSource(null);
+    return;
+  }
 
-    try {
-      // First, try blockchain
-      const data = await getTerm(searchKey);
-      
-      console.log("Component received data:", data);
+  setLoading(true);
+  setResult(null);
+  setResultSource(null);
 
-      if (data && data.type === "some") {
-        // Found on blockchain
-        setResult(data.value);
-        setResultSource("blockchain");
-      } else if (data && data.type === "none") {
-        // Not found on blockchain, check local dictionary
-        const normalizedKey = searchKey.toLowerCase().trim();
-        const localResult = clarityDictionary[normalizedKey];
-        
-        if (localResult) {
-          setResult(localResult);
-          setResultSource("local");
-        } else {
-          setResult(`"${searchKey}" not found in blockchain dictionary or local database. You can add it using the form below!`);
-          setResultSource(null);
-        }
-      } else {
-        // Error case - fallback to local dictionary
-        const normalizedKey = searchKey.toLowerCase().trim();
-        const localResult = clarityDictionary[normalizedKey];
-        
-        if (localResult) {
-          setResult(localResult);
-          setResultSource("local");
-        } else {
-          // Show helpful message instead of technical error
-          setResult(
-            `Unable to fetch from blockchain at this time. The term "${searchKey}" is not in the local database. ` +
-            `If you recently stored this term, please wait a few minutes for blockchain confirmation, then try again.`
-          );
-          setResultSource(null);
-        }
-      }
-    } catch (error) {
-      console.error("Search error:", error);
-      
-      // On error, try local dictionary as fallback
+  try {
+    // First, try blockchain
+    const data = await getTerm(searchKey);
+    
+    console.log("Component received data:", data);
+
+    // If blockchain returns null (error or connection issue)
+    if (data === null) {
+      // Fallback to local dictionary
       const normalizedKey = searchKey.toLowerCase().trim();
       const localResult = clarityDictionary[normalizedKey];
       
@@ -81,18 +47,59 @@ export function ClarityLearnDemo() {
         setResult(localResult);
         setResultSource("local");
       } else {
-        // User-friendly error message
         setResult(
-          `Blockchain query unavailable. "${searchKey}" not found in local database. ` +
-          `Tip: Search for terms like "blockchain", "stacks", or "clarity" from the local dictionary, ` +
-          `or store your own terms to save them on-chain!`
+          `Unable to fetch from blockchain at this time. The term "${searchKey}" is not in the local database. ` +
+          `If you recently stored this term, please wait a few minutes for blockchain confirmation, then try again.`
         );
         setResultSource(null);
       }
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    // If blockchain returns { type: "none" } (not found on blockchain)
+    if ('type' in data && data.type === "none") {
+      // Try local dictionary as fallback
+      const normalizedKey = searchKey.toLowerCase().trim();
+      const localResult = clarityDictionary[normalizedKey];
+      
+      if (localResult) {
+        setResult(localResult);
+        setResultSource("local");
+      } else {
+        setResult(`"${searchKey}" not found in blockchain dictionary or local database. You can add it using the form below!`);
+        setResultSource(null);
+      }
+      return;
+    }
+
+    // If blockchain returns a definition
+    if ('definition' in data && data.definition) {
+      setResult(data.definition);
+      setResultSource(data.source as "blockchain" | "local");
+    }
+
+  } catch (error) {
+    console.error("Search error:", error);
+    
+    // On error, try local dictionary as fallback
+    const normalizedKey = searchKey.toLowerCase().trim();
+    const localResult = clarityDictionary[normalizedKey];
+    
+    if (localResult) {
+      setResult(localResult);
+      setResultSource("local");
+    } else {
+      setResult(
+        `Blockchain query unavailable. "${searchKey}" not found in local database. ` +
+        `Tip: Search for terms like "blockchain", "stacks", or "clarity" from the local dictionary, ` +
+        `or store your own terms to save them on-chain!`
+      );
+      setResultSource(null);
+    }
+  } finally {
+    setLoading(false);
   }
+}
 
   async function handleStore() {
     if (!storeKey.trim() || !storeValue.trim()) {
@@ -133,7 +140,8 @@ export function ClarityLearnDemo() {
       console.log("Component received total terms:", data);
       
       if (data && data.type === "ok") {
-        setTotalTerms(data.value);
+        // FIX: Remove the extra .value
+        setTotalTerms(data.value);  // Correct
       }
     } catch (error) {
       console.error(error);
@@ -189,7 +197,7 @@ export function ClarityLearnDemo() {
                       ? "bg-green-900 text-green-300" 
                       : "bg-blue-900 text-blue-300"
                   }`}>
-                    {resultSource === "blockchain" ? "🔗 From Blockchain" : "📚 From Local DB"}
+                    {resultSource === "blockchain" ? "From Blockchain" : "From Local DB"}
                   </span>
                 )}
               </div>
